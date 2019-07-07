@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:ws="http://www.mulesoft.org/schema/mule/ws" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:context="http://www.springframework.org/schema/context" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+<mule xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:ws="http://www.mulesoft.org/schema/mule/ws" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:context="http://www.springframework.org/schema/context" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:spring="http://www.springframework.org/schema/beans" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
@@ -10,7 +10,8 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
 http://www.mulesoft.org/schema/mule/ws http://www.mulesoft.org/schema/mule/ws/current/mule-ws.xsd
 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
 http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
-http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd">
     <http:request-config name="HTTP_Request_Accounts_API" host="${accounts.host}" port="${accounts.port}" doc:name="HTTP Request Configuration" basePath="${accounts.base}" responseTimeout="15000"/>
     <context:property-placeholder location="${env}.properties"/>
     <ws:consumer-config name="Web_Service_Consumer" wsdlLocation="http://apdev-accounts-ws.cloudhub.io/api/transactions?wsdl" service="TransactionServiceService" port="TransactionServicePort" serviceAddress="http://apdev-accounts-ws.cloudhub.io/api/transactions" doc:name="Web Service Consumer"/>
@@ -52,9 +53,19 @@ using (data = consolidateAccountsTrans(payload))
 	message: "Processed $(sizeOf flowVars.accountsPayload) records."
 }]]></dw:set-payload>
  </dw:transform-message>
+        <choice-exception-strategy doc:name="Choice_Exception_Strategy">
+            <catch-exception-strategy when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="DataWeave exception">
+                <set-property propertyName="http.status" value="400" doc:name="400"/>
+                <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+            <catch-exception-strategy doc:name="All other exceptions">
+                <set-property propertyName="http.status" value="500" doc:name="500"/>
+                <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+        </choice-exception-strategy>
      </flow>
     <flow name="getAccountsFlow">
-        <validation:is-not-null message="query parameter 'type' is required. The value should be either 'personal' or 'business'." value="#[message.inboundProperties.'http.query.params'.type]" doc:name="Validate type"/>
+        <validation:is-not-null message="query parameter 'type' is required. The value should be either 'personal' or 'business'." value="#[message.inboundProperties.'http.query.params'.type]" doc:name="Validate type" />
         <validation:is-not-null message="Requester-ID header should not be empty." value="#[message.inboundProperties.'Requester-ID']" doc:name="Validate Requester-ID"/>
         <http:request config-ref="HTTP_Request_Accounts_API" path="${accounts.endpoint}" method="GET" doc:name="Get Accounts">
             <http:request-builder>
@@ -79,8 +90,21 @@ payload default []]]></dw:set-variable>
 {customerIDs: payload.*id default []}]]></dw:set-variable>
         </dw:transform-message>
         <flow-ref name="getTransactionsForGivenAccountsFlow" doc:name="getTransactionsForGivenAccountsFlow"/>
+        <choice-exception-strategy doc:name="Choice_Exception_Strategy">
+            <catch-exception-strategy when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="DataWeave exception">
+                <set-property propertyName="http.status" value="400" doc:name="400"/>
+                <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+            <catch-exception-strategy doc:name="All other exceptions">
+                <set-property propertyName="http.status" value="500" doc:name="500"/>
+                <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+        </choice-exception-strategy>
     </flow>
     <sub-flow name="getTransactionsForGivenAccountsFlow">
+        <scripting:transformer doc:name="Groovy">
+            <scripting:script engine="Groovy"><![CDATA[throw new java.lang.NullPointerException();]]></scripting:script>
+        </scripting:transformer>
         <dw:transform-message doc:name="Create XML Payload for Web Service Consumer" metadata:id="73bf4c45-87f3-4837-a488-317a37352144">
             <dw:input-variable doc:sample="customerIDsExample.json" mimeType="application/json" variableName="customerIDList"/>
             <dw:set-payload><![CDATA[%dw 1.0

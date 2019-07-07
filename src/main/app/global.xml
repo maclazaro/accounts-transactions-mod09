@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:cluster="http://www.mulesoft.org/schema/mule/ee/cluster" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+    <configuration defaultExceptionStrategy-ref="Choice_Exception_Strategy" doc:name="Configuration">
+        <http:config useTransportForUris="false"/>
+    </configuration>
+        <choice-exception-strategy name="Choice_Exception_Strategy">
+            <catch-exception-strategy when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="DataWeave errors">
+                <set-property propertyName="http.status" value="500" doc:name="500" mimeType="application/json"/>
+                <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+            <!--catch-exception-strategy when="#[exception.causeMatches('java.lang.*')]" doc:name="java.lang errors">
+            <set-payload value="#[&quot;java.lang errors: &quot; + exception]" doc:name="Set Payload"/>
+                <set-property propertyName="http.status" value="500" doc:name="500" mimeType="application/json"/>
+                <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy-->
+            <catch-exception-strategy when="#[exception.causeMatches('java.io.*')]" doc:name="java.io errors">
+                <set-property propertyName="http.status" value="500" doc:name="500" mimeType="application/json"/>
+                <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+            <catch-exception-strategy  doc:name="All other errors">
+                <set-property propertyName="http.status" value="500" doc:name="500" mimeType="application/json"/>
+                <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+        </choice-exception-strategy>
+</mule>
