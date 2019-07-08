@@ -53,14 +53,12 @@ using (data = consolidateAccountsTrans(payload))
 	message: "Processed $(sizeOf flowVars.accountsPayload) records."
 }]]></dw:set-payload>
  </dw:transform-message>
-        <choice-exception-strategy doc:name="Choice_Exception_Strategy">
-            <catch-exception-strategy when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="DataWeave exception">
-                <set-property propertyName="http.status" value="400" doc:name="400"/>
-                <logger level="INFO" doc:name="Logger"/>
+ <choice-exception-strategy doc:name="Choice Exception Strategy">
+            <catch-exception-strategy when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="Catch Exception Strategy">
+                <set-payload value="Exception caught getting all accounts from accounts REST service #[exception]" doc:name="Set Payload"/>
             </catch-exception-strategy>
-            <catch-exception-strategy doc:name="All other exceptions">
-                <set-property propertyName="http.status" value="500" doc:name="500"/>
-                <logger level="INFO" doc:name="Logger"/>
+            <catch-exception-strategy doc:name="Catch All Exception Strategy">
+                <set-payload value="#['Process Accounts Transaction flow caught an exception: '+exception]" doc:name="Set Payload"/>
             </catch-exception-strategy>
         </choice-exception-strategy>
      </flow>
@@ -90,14 +88,12 @@ payload default []]]></dw:set-variable>
 {customerIDs: payload.*id default []}]]></dw:set-variable>
         </dw:transform-message>
         <flow-ref name="getTransactionsForGivenAccountsFlow" doc:name="getTransactionsForGivenAccountsFlow"/>
-        <choice-exception-strategy doc:name="Choice_Exception_Strategy">
-            <catch-exception-strategy when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="DataWeave exception">
-                <set-property propertyName="http.status" value="400" doc:name="400"/>
-                <logger level="INFO" doc:name="Logger"/>
+ <choice-exception-strategy doc:name="Choice Exception Strategy">
+            <catch-exception-strategy when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="Catch Exception Strategy">
+                <set-payload value="Exception caught getting all accounts from accounts REST service #[exception]" doc:name="Set Payload"/>
             </catch-exception-strategy>
-            <catch-exception-strategy doc:name="All other exceptions">
-                <set-property propertyName="http.status" value="500" doc:name="500"/>
-                <logger level="INFO" doc:name="Logger"/>
+            <catch-exception-strategy doc:name="Catch All Exception Strategy">
+                <set-payload value="#['Process Accounts Transaction flow caught an exception: '+exception]" doc:name="Set Payload"/>
             </catch-exception-strategy>
         </choice-exception-strategy>
     </flow>
