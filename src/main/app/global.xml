@@ -10,41 +10,66 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
         <http:config useTransportForUris="false"/>
     </configuration>
 	<choice-exception-strategy name="Default_Choice_Exception_Strategy">
-		<catch-exception-strategy
-			when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="DW exception">
-			<set-payload value="NO FLIGHTS to #[flowVars.code +  '\n' + exception]"
-				doc:name="Set Payload" />
-			<set-property propertyName="http.status" value="400"
-				doc:name="Property" />
+		<catch-exception-strategy when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="DW exception">
+			<set-payload value="NO FLIGHTS to #[flowVars.code + exception]" doc:name="Set Payload" mimeType="application/json"/>
+			<set-property propertyName="http.status" value="400" doc:name="Property" />
 			<logger level="INFO" doc:name="Logger" />
 		</catch-exception-strategy>
-		<catch-exception-strategy
-			when="#[exception.causeMatches('java.lang.OutOfMemoryError')]"
-			doc:name="Catch java.lang.OutOfMemoryError Exception Strategy">
-            <set-payload value="#['Out of memory error occured' + exception]" doc:name="Set Payload"/>
-			<set-property propertyName="http.status" value="500"
-				doc:name="Property" />
+		<catch-exception-strategy when="#[exception.causeMatches('java.lang.OutOfMemoryError')]" doc:name="Catch java.lang.OutOfMemoryError Exception Strategy">
+            <set-payload value="#['Out of memory error occured: ' + exception]" doc:name="Set Payload" mimeType="application/json"/>
+			<set-property propertyName="http.status" value="500" doc:name="Property" />
+            <logger level="INFO" doc:name="Logger"/>
 		</catch-exception-strategy>
-		<catch-exception-strategy when="#[exception.causeMatches('java.io.*')]"
-			doc:name="Catch java.io Exception Strategy">
-            <set-payload value="#['java.io exception occured: '+exception]" doc:name="Set Payload"/>
-			<set-property propertyName="http.status" value="500"
-				doc:name="Property" />
+		<catch-exception-strategy when="#[exception.causeMatches('java.io.*')]" doc:name="Catch java.io Exception Strategy">
+            <set-payload value="#['java.io exception occured: '+exception]" doc:name="Set Payload" mimeType="application/json"/>
+			<set-property propertyName="http.status" value="500" doc:name="Property" />
+            <logger level="INFO" doc:name="Logger"/>
 		</catch-exception-strategy>
-		<catch-exception-strategy
-			when="#[exception.causeMatches('InterruptedException')]" doc:name="Catch java.lang.InterruptedException Exception Strategy">
-            <set-payload value="#['Java thread InterruptedException occured: ' + exception]" doc:name="Set Payload"/>
-			<set-property propertyName="http.status" value="500"
-				doc:name="Property" />
+		<catch-exception-strategy when="#[exception.causeMatches('InterruptedException')]" doc:name="Catch java.lang.InterruptedException Exception Strategy">
+            <set-payload value="#['Java thread InterruptedException occured: ' + exception]" doc:name="Set Payload" mimeType="application/json"/>
+			<set-property propertyName="http.status" value="500" doc:name="Property" />
+            <logger level="INFO" doc:name="Logger"/>
 		</catch-exception-strategy>
-		<catch-exception-strategy
-			doc:name="Data unavailable &#8211; all other exceptions">
-			<set-payload
-				value="Default Exception : DATA IS UNAVAILABLE. TRY LATER. #['\n' + exception] "
-				doc:name="Set Payload" />
-			<set-property propertyName="http.status" value="500"
-				doc:name="Property" />
+		<catch-exception-strategy doc:name="Data unavailable &#8211; all other exceptions">
+			<set-payload value="Default Exception : DATA IS UNAVAILABLE. TRY LATER. #[exception]" doc:name="Set Payload" mimeType="application/json"/>
+			<set-property propertyName="http.status" value="500" doc:name="Property" />
 			<logger level="INFO" doc:name="Logger" />
 		</catch-exception-strategy>
 	</choice-exception-strategy>
+ <choice-exception-strategy name="REST_Choice_Exception_Strategy">
+            <catch-exception-strategy when="#[exception.causeMatches('org.mule.module.http.*')]" doc:name="org.mule.module.http">
+                <set-payload value="#['REST org.mule.module.http occurred: ' + exception]" doc:name="Set Payload" mimeType="application/json"/>
+            <set-property doc:name="Property" propertyName="http.status" value="500"/>
+            <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+            <catch-exception-strategy doc:name="java.net.UnknownHostException" when="#[exception.causeMatches('java.net.UnknownHostException')]">
+                <set-payload value="#['java.net.UnknownHostException occurred: ' + exception]" doc:name="Set Payload" mimeType="application/json"/>
+            <set-property doc:name="Property" propertyName="http.status" value="500"/>
+            <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+            <catch-exception-strategy doc:name="org.mule.api" when="#[exception.causeMatches('org.mule.api.*')]">
+                <set-payload value="#['org.mule.api occurred: ' + exception]" doc:name="Set Payload" mimeType="application/json"/>
+            <set-property doc:name="Property" propertyName="http.status" value="500"/>
+            <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+        <exception-strategy ref="Default_Choice_Exception_Strategy" doc:name="Reference Exception Strategy"/>
+        </choice-exception-strategy>
+ <choice-exception-strategy name="SOAP_Choice_Exception_Strategy">
+            <catch-exception-strategy when="#[exception.causeMatches('org.mule.module.http.*')]" doc:name="org.mule.module.http">
+                <set-payload value="#['SOAP org.mule.module.http occurred: ' + exception]" doc:name="Set Payload" mimeType="application/json"/>
+            <set-property doc:name="Property" propertyName="http.status" value="500"/>
+            <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+            <catch-exception-strategy doc:name="org.mule.module.ws.consumer" when="#[exception.causeMatches('org.mule.module.ws.consumer.*')]">
+                <set-payload value="#['org.mule.module.ws.consumer: ' + exception]" doc:name="Set Payload" mimeType="application/json"/>
+            <set-property doc:name="Property" propertyName="http.status" value="500"/>
+            <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+            <catch-exception-strategy doc:name="org.apache.cxf" when="#[exception.causeMatches('org.apache.cxf.*')]">
+                <set-payload value="#['org.apache.cxf occurred: ' + exception]" doc:name="Set Payload" mimeType="application/json"/>
+            <set-property doc:name="Property" propertyName="http.status" value="500"/>
+            <logger level="INFO" doc:name="Logger"/>
+            </catch-exception-strategy>
+        <exception-strategy ref="Default_Choice_Exception_Strategy" doc:name="Reference Exception Strategy"/>
+        </choice-exception-strategy>
 </mule>

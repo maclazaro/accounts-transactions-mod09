@@ -55,11 +55,9 @@ using (data = consolidateAccountsTrans(payload))
  </dw:transform-message>
  <choice-exception-strategy doc:name="Choice Exception Strategy">
             <catch-exception-strategy when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="Catch Exception Strategy">
-                <set-payload value="Exception caught getting all accounts from accounts REST service #[exception]" doc:name="Set Payload"/>
+                <set-payload value="Exception caught getting all accounts from accounts REST service (processAccountsTransactionsFlow) #[exception]" doc:name="Set Payload" mimeType="application/json"/>
             </catch-exception-strategy>
-            <catch-exception-strategy doc:name="Catch All Exception Strategy">
-                <set-payload value="#['Process Accounts Transaction flow caught an exception: '+exception]" doc:name="Set Payload"/>
-            </catch-exception-strategy>
+            <exception-strategy ref="REST_Choice_Exception_Strategy" doc:name="Reference Exception Strategy"/>
         </choice-exception-strategy>
      </flow>
     <flow name="getAccountsFlow">
@@ -90,14 +88,12 @@ payload default []]]></dw:set-variable>
         <flow-ref name="getTransactionsForGivenAccountsFlow" doc:name="getTransactionsForGivenAccountsFlow"/>
  <choice-exception-strategy doc:name="Choice Exception Strategy">
             <catch-exception-strategy when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="Catch Exception Strategy">
-                <set-payload value="Exception caught getting all accounts from accounts REST service #[exception]" doc:name="Set Payload"/>
+                <set-payload value="Exception caught getting all accounts from accounts REST service (getAccountsFlow) #[exception]" doc:name="Set Payload" mimeType="application/json"/>
             </catch-exception-strategy>
-            <catch-exception-strategy doc:name="Catch All Exception Strategy">
-                <set-payload value="#['Process Accounts Transaction flow caught an exception: '+exception]" doc:name="Set Payload"/>
-            </catch-exception-strategy>
+            <exception-strategy ref="REST_Choice_Exception_Strategy" doc:name="Reference Exception Strategy"/>
         </choice-exception-strategy>
     </flow>
-    <sub-flow name="getTransactionsForGivenAccountsFlow">
+    <flow name="getTransactionsForGivenAccountsFlow">
         <scripting:transformer doc:name="Groovy">
             <scripting:script engine="Groovy"><![CDATA[throw new java.lang.NullPointerException();]]></scripting:script>
         </scripting:transformer>
@@ -126,5 +122,11 @@ payload default []]]></dw:set-variable>
 	transactions: payload.GetTransactionsResponse.*transaction default []
 }]]></dw:set-payload>
         </dw:transform-message>
-    </sub-flow>
+ <choice-exception-strategy doc:name="Choice Exception Strategy">
+            <catch-exception-strategy when="#[exception.causeMatches('com.mulesoft.weave.*')]" doc:name="Catch Exception Strategy">
+                <set-payload value="Exception caught getting all accounts from accounts SOAP service (getTransactionsForGivenAccountsFlow) #[exception]" doc:name="Set Payload" mimeType="application/json"/>
+            </catch-exception-strategy>
+            <exception-strategy ref="SOAP_Choice_Exception_Strategy" doc:name="Reference Exception Strategy"/>
+        </choice-exception-strategy>
+    </flow>
 </mule>
