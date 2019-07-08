@@ -14,11 +14,10 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
                 <set-property propertyName="http.status" value="500" doc:name="500" mimeType="application/json"/>
                 <logger level="INFO" doc:name="Logger"/>
             </catch-exception-strategy>
-            <!--catch-exception-strategy when="#[exception.causeMatches('java.lang.*')]" doc:name="java.lang errors">
-            <set-payload value="#[&quot;java.lang errors: &quot; + exception]" doc:name="Set Payload"/>
+            <catch-exception-strategy when="#[exception.causeMatches('java.lang.*')]" doc:name="java.lang errors">
                 <set-property propertyName="http.status" value="500" doc:name="500" mimeType="application/json"/>
                 <logger level="INFO" doc:name="Logger"/>
-            </catch-exception-strategy-->
+            </catch-exception-strategy>
             <catch-exception-strategy when="#[exception.causeMatches('java.io.*')]" doc:name="java.io errors">
                 <set-property propertyName="http.status" value="500" doc:name="500" mimeType="application/json"/>
                 <logger level="INFO" doc:name="Logger"/>
